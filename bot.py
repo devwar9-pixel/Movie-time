@@ -2,8 +2,8 @@ import re
 import requests
 from telethon import TelegramClient, events
 
-api_id = YOUR_API_ID  # 39808787
-api_hash = "YOUR_API_HASH"  # 78cd2d0a2edad2ead12a5b881008a697
+api_id =39808787
+api_hash = "78cd2d0a2edad2ead12a5b881008a697"
 
 RENDER_API_URL = "https://movie-time-2yfd.onrender.com"
 API_SECRET_KEY = "my_secret_key_123"
@@ -17,7 +17,7 @@ SOURCE_CHANNELS = [
     "@SouthIndianHub",
 ]
 
-MY_TELEGRAM_CHANNEL = "@apna_khud_ka_telegram_channel"
+MY_TELEGRAM_CHANNEL = "https://t.me/latesmovies9"
 
 client = TelegramClient("session_name", api_id, api_hash)
 
