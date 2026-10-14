@@ -1,21 +1,23 @@
 import os
 import re
+import json
 import asyncio
 import threading
 import requests
-from flask import Flask
+from flask import Flask, request, jsonify
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
 # ----------------------------------------------------
 # APNI DETAILS YAHAN DAALEIN:
 api_id = 39808787
-api_hash = "78cd2d0a2edad2ead12a5b881008a697"  
+api_hash = "78cd2d0a2edad2ead12a5b881008a697" 
 session_string = "1BVtsOI4BuwEVkqC9ZDmaUavSOUtXnwtNq9rDk7HQ6Eg7jGLlTJT5DRZWh9SRMDRKKH28kal-d8A0NkX2zHV0FZ_6q1QUDj6-YRoYvAc22X1u3dy7fZcq10i_kkeTYnhyoZBPmDxg94nlhyVJgzxUALcahaiEObTOeZVs2ePI-4jekmey-anK5rRBrFfiVavXMPV984vOaynCTZTAdf86vBAxCv-zQkZ_qWoT8VydYscye8jFoQsW0gLibtEBj4x-upQVAWEZJ7X61On3Sy_V5ZS-Ed6T9dQieeiIXIiXOWvMRYrw5s5BCKhsIyQSAc6f0WpPUPtQQdYQ7AQQZzNPe2llnpOYDTU="
 # ----------------------------------------------------
 
-RENDER_API_URL = "https://movie-time-2yfd.onrender.com"
+RENDER_API_URL = "https://movie-time-1-ygfk.onrender.com/api.php"
 API_SECRET_KEY = "my_secret_key_123"
+MOVIES_FILE = "movies.json"
 
 SOURCE_CHANNELS = [
     "@HollywoodMoviesHub",
@@ -28,20 +30,64 @@ SOURCE_CHANNELS = [
 
 MY_TELEGRAM_CHANNEL = "https://t.me/latesmovies9"
 
-# Flask Server (Main Thread ke liye)
+# Flask Server Setup
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is active and running 24/7 on Render!"
+    return "Bot and Movie API is active and running 24/7!"
 
+@app.route('/api.php', methods=['POST', 'GET'])
+@app.route('/movies.json', methods=['GET'])
+def handle_api():
+    # Agar bot naya data bhej raha hai (POST request)
+    if request.method == 'POST':
+        data = request.json
+        if not data or data.get("secret") != API_SECRET_KEY:
+            return jsonify({"status": "error", "message": "Unauthorized"}), 403
+        
+        movies = []
+        if os.path.exists(MOVIES_FILE):
+            try:
+                with open(MOVIES_FILE, 'r') as f:
+                    movies = json.load(f)
+            except:
+                movies = []
+        
+        new_movie = {
+            "title": data.get("title", "Movie Release"),
+            "quality": data.get("quality", "HD / Hindi Dubbed"),
+            "embed_link": data.get("embed_link", ""),
+            "telegram_link": data.get("telegram_link", ""),
+            "poster": data.get("poster", "https://via.placeholder.com/300x450?text=PRMovie")
+        }
+        
+        # Nayi movie ko sabse upar add karna
+        movies.insert(0, new_movie)
+        movies = movies[:100]  # Sirf latest 100 movies save rakhein
+        
+        with open(MOVIES_FILE, 'w') as f:
+            json.dump(movies, f, indent=4)
+            
+        return jsonify({"status": "success", "message": "Saved successfully!"})
+    
+    # Agar Blogger ya browser movies mang raha hai (GET request)
+    elif request.method == 'GET':
+        if os.path.exists(MOVIES_FILE):
+            with open(MOVIES_FILE, 'r') as f:
+                return f.read()
+        return jsonify([])
+
+# Telethon Client Setup
 client = TelegramClient(StringSession(session_string), api_id, api_hash)
 
 async def scan_old_movies():
   print("Purane messages ko scan kiya ja raha hai...")
+  RENDER_LOCAL_URL = "http://127.0.0.1:10000/api.php"
+  
   for channel in SOURCE_CHANNELS:
     try:
-      async for msg in client.iter_messages(channel, limit=50):
+      async for msg in client.iter_messages(channel, limit=20):
         text = msg.text or msg.caption or ""
         if not text:
           continue
@@ -51,7 +97,6 @@ async def scan_old_movies():
 
         urls = re.findall(r"(https?://[^\s]+)", text)
         direct_embed_link = urls[0] if urls else ""
-
         telegram_post_link = f"https://t.me/{channel.replace('@','')}/{msg.id}"
 
         payload = {
@@ -62,7 +107,7 @@ async def scan_old_movies():
             "telegram_link": telegram_post_link,
         }
 
-        requests.post(RENDER_API_URL, json=payload)
+        requests.post(RENDER_LOCAL_URL, json=payload)
     except Exception as e:
       print(f"Error scanning channel {channel}: {e}")
   print("Scanning poori ho gayi hai!")
@@ -71,7 +116,6 @@ async def scan_old_movies():
 async def movie_listener(event):
   msg = event.message
   text = msg.text or msg.caption or ""
-
   if not text:
     return
 
@@ -103,7 +147,7 @@ async def movie_listener(event):
   }
 
   try:
-    requests.post(RENDER_API_URL, json=payload)
+    requests.post("http://127.0.0.1:10000/api.php", json=payload)
   except Exception as e:
     print("Network Error:", e)
 
@@ -121,9 +165,6 @@ def run_telegram_bot():
         client.run_until_disconnected()
 
 if __name__ == "__main__":
-    # Telegram Bot ko background thread me chala diya
     threading.Thread(target=run_telegram_bot, daemon=True).start()
-    
-    # Flask Web Server ko main thread par chala diya taaki Render port turant detect kar le
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
