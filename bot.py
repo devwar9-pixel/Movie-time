@@ -1,9 +1,15 @@
+import os
 import re
 import requests
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
-api_id = "39808787"
-api_hash = "78cd2d0a2edad2ead12a5b881008a697"
+# ----------------------------------------------------
+# APNI DETAILS YAHAN DAALEIN:
+api_id = 39808787
+api_hash = "78cd2d0a2edad2ead12a5b881008a697"  
+session_string = "1BVtsOI4BuwEVkqC9ZDmaUavSOUtXnwtNq9rDk7HQ6Eg7jGLlTJT5DRZWh9SRMDRKKH28kal-d8A0NkX2zHV0FZ_6q1QUDj6-YRoYvAc22X1u3dy7fZcq10i_kkeTYnhyoZBPmDxg94nlhyVJgzxUALcahaiEObTOeZVs2ePI-4jekmey-anK5rRBrFfiVavXMPV984vOaynCTZTAdf86vBAxCv-zQkZ_qWoT8VydYscye8jFoQsW0gLibtEBj4x-upQVAWEZJ7X61On3Sy_V5ZS-Ed6T9dQieeiIXIiXOWvMRYrw5s5BCKhsIyQSAc6f0WpPUPtQQdYQ7AQQZzNPe2llnpOYDTU="
+# ----------------------------------------------------
 
 RENDER_API_URL = "https://movie-time-2yfd.onrender.com"
 API_SECRET_KEY = "my_secret_key_123"
@@ -19,7 +25,8 @@ SOURCE_CHANNELS = [
 
 MY_TELEGRAM_CHANNEL = "https://t.me/latesmovies9"
 
-client = TelegramClient("session_name", api_id, api_hash)
+# Render ke liye StringSession ka use kiya gaya hai taaki terminal input ki zaroorat na pade
+client = TelegramClient(StringSession(session_string), api_id, api_hash)
 
 
 async def scan_old_movies():
