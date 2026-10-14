@@ -28,14 +28,17 @@ SOURCE_CHANNELS = [
 
 MY_TELEGRAM_CHANNEL = "https://t.me/latesmovies9"
 
-# Render ke liye StringSession ka use kiya gaya hai taaki terminal input ki zaroorat na pade
+# Flask Server (Main Thread ke liye)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is active and running 24/7 on Render!"
+
 client = TelegramClient(StringSession(session_string), api_id, api_hash)
 
-
 async def scan_old_movies():
-  print(
-      "Purane messages ko scan kiya ja raha hai, kripya intezaar karein..."
-  )
+  print("Purane messages ko scan kiya ja raha hai...")
   for channel in SOURCE_CHANNELS:
     try:
       async for msg in client.iter_messages(channel, limit=50):
@@ -62,8 +65,7 @@ async def scan_old_movies():
         requests.post(RENDER_API_URL, json=payload)
     except Exception as e:
       print(f"Error scanning channel {channel}: {e}")
-  print("Purane messages ki scanning poori ho gayi hai!")
-
+  print("Scanning poori ho gayi hai!")
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
 async def movie_listener(event):
@@ -105,13 +107,23 @@ async def movie_listener(event):
   except Exception as e:
     print("Network Error:", e)
 
+def run_telegram_bot():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    async def main():
+        print("Telegram Bot Start Ho Raha Hai...")
+        await scan_old_movies()
+        print("Ab Live New Messages ka Intezaar kiya ja raha hai...")
 
-async def main():
-  print("Bot Start Ho Raha Hai...")
-  await scan_old_movies()
-  print("Ab Live New Messages ka Intezaar kiya ja raha hai...")
+    with client:
+        client.loop.run_until_complete(main())
+        client.run_until_disconnected()
 
-
-with client:
-  client.loop.run_until_complete(main())
-  client.run_until_disconnected()
+if __name__ == "__main__":
+    # Telegram Bot ko background thread me chala diya
+    threading.Thread(target=run_telegram_bot, daemon=True).start()
+    
+    # Flask Web Server ko main thread par chala diya taaki Render port turant detect kar le
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
