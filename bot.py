@@ -15,7 +15,7 @@ api_hash = "78cd2d0a2edad2ead12a5b881008a697"
 session_string = "1BVtsOI4BuwEVkqC9ZDmaUavSOUtXnwtNq9rDk7HQ6Eg7jGLlTJT5DRZWh9SRMDRKKH28kal-d8A0NkX2zHV0FZ_6q1QUDj6-YRoYvAc22X1u3dy7fZcq10i_kkeTYnhyoZBPmDxg94nlhyVJgzxUALcahaiEObTOeZVs2ePI-4jekmey-anK5rRBrFfiVavXMPV984vOaynCTZTAdf86vBAxCv-zQkZ_qWoT8VydYscye8jFoQsW0gLibtEBj4x-upQVAWEZJ7X61On3Sy_V5ZS-Ed6T9dQieeiIXIiXOWvMRYrw5s5BCKhsIyQSAc6f0WpPUPtQQdYQ7AQQZzNPe2llnpOYDTU="
 # ----------------------------------------------------
 
-RENDER_API_URL = "https://movie-time-2yfd.onrender.com/api.php"
+RENDER_API_URL = "https://movie-time-1-ygfk.onrender.com/api.php"
 API_SECRET_KEY = "my_secret_key_123"
 MOVIES_FILE = "movies.json"
 
