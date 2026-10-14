@@ -9,7 +9,7 @@ from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
 # ----------------------------------------------------
-# APNI DETAILS YAHAN DAALEIN:
+# APNI REAL DETAILS YAHAN DAALEIN:
 api_id = 39808787
 api_hash = "78cd2d0a2edad2ead12a5b881008a697" 
 session_string = "1BVtsOI4BuwEVkqC9ZDmaUavSOUtXnwtNq9rDk7HQ6Eg7jGLlTJT5DRZWh9SRMDRKKH28kal-d8A0NkX2zHV0FZ_6q1QUDj6-YRoYvAc22X1u3dy7fZcq10i_kkeTYnhyoZBPmDxg94nlhyVJgzxUALcahaiEObTOeZVs2ePI-4jekmey-anK5rRBrFfiVavXMPV984vOaynCTZTAdf86vBAxCv-zQkZ_qWoT8VydYscye8jFoQsW0gLibtEBj4x-upQVAWEZJ7X61On3Sy_V5ZS-Ed6T9dQieeiIXIiXOWvMRYrw5s5BCKhsIyQSAc6f0WpPUPtQQdYQ7AQQZzNPe2llnpOYDTU="
@@ -38,9 +38,7 @@ def home():
     return "Bot and Movie API is active and running 24/7!"
 
 @app.route('/api.php', methods=['POST', 'GET'])
-@app.route('/movies.json', methods=['GET'])
 def handle_api():
-    # Agar bot naya data bhej raha hai (POST request)
     if request.method == 'POST':
         data = request.json
         if not data or data.get("secret") != API_SECRET_KEY:
@@ -62,21 +60,40 @@ def handle_api():
             "poster": data.get("poster", "https://via.placeholder.com/300x450?text=PRMovie")
         }
         
-        # Nayi movie ko sabse upar add karna
         movies.insert(0, new_movie)
-        movies = movies[:100]  # Sirf latest 100 movies save rakhein
+        movies = movies[:100]
         
         with open(MOVIES_FILE, 'w') as f:
             json.dump(movies, f, indent=4)
             
-        return jsonify({"status": "success", "message": "Saved successfully!"})
+        resp = jsonify({"status": "success", "message": "Saved successfully!"})
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        return resp
     
-    # Agar Blogger ya browser movies mang raha hai (GET request)
     elif request.method == 'GET':
+        movies = []
         if os.path.exists(MOVIES_FILE):
+            try:
+                with open(MOVIES_FILE, 'r') as f:
+                    movies = json.load(f)
+            except:
+                movies = []
+        resp = jsonify(movies)
+        resp.headers.add("Access-Control-Allow-Origin", "*")
+        return resp
+
+@app.route('/movies.json', methods=['GET'])
+def get_movies_json():
+    movies = []
+    if os.path.exists(MOVIES_FILE):
+        try:
             with open(MOVIES_FILE, 'r') as f:
-                return f.read()
-        return jsonify([])
+                movies = json.load(f)
+        except:
+            movies = []
+    resp = jsonify(movies)
+    resp.headers.add("Access-Control-Allow-Origin", "*")
+    return resp
 
 # Telethon Client Setup
 client = TelegramClient(StringSession(session_string), api_id, api_hash)
@@ -87,7 +104,7 @@ async def scan_old_movies():
   
   for channel in SOURCE_CHANNELS:
     try:
-      async for msg in client.iter_messages(channel, limit=20):
+      async for msg in client.iter_messages(channel, limit=10):
         text = msg.text or msg.caption or ""
         if not text:
           continue
